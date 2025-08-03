@@ -9,7 +9,7 @@ class Config:
     
     # 扣子平台配置
     COZE_TOKEN = 'pat_bfFS5ooxdOoj9xpCK8VS9sSOlWWdkHdzs18TAv6u0pixs3aP3vTX4w6AWx6F5wKa'
-    COZE_BASE_URL = 'https://api.coze.cn/v1/workflow/stream_run'
+    COZE_BASE_URL = 'https://api.coze.cn/v1/workflow/run'
     
     # 工作流ID
     WORKFLOW_IDS = {
@@ -47,4 +47,4 @@ config = {
     'production': ProductionConfig,
     'testing': TestingConfig,
     'default': DevelopmentConfig
-} 
+}
