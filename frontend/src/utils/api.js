@@ -4,7 +4,7 @@ import { ElMessage } from 'element-plus'
 // 创建axios实例
 const api = axios.create({
   baseURL: '/api',
-  timeout: 30000,
+  timeout: 120000, // 增加到120秒
   withCredentials: true
 })
 
@@ -53,4 +53,4 @@ api.interceptors.response.use(
   }
 )
 
-export default api 
+export default api

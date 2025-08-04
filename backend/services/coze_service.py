@@ -1,5 +1,6 @@
 import json
 import requests
+import json
 from flask import current_app
 from typing import Dict, List, Optional, Any
 
@@ -15,50 +16,58 @@ class CozeService:
             'Content-Type': 'application/json'
         }
     
-    def _call_workflow(self, workflow_id: str, parameters: Dict[str, Any], timeout: int = 60) -> Optional[Dict]:
-        """调用工作流"""
-        try:
-            payload = {
-                'workflow_id': workflow_id,
-                'parameters': parameters
-            }
-            
-            current_app.logger.info(f"Calling Coze API: {self.base_url}, payload: {payload}")
-            response = requests.post(
-                self.base_url,
-                headers=self.headers,
-                json=payload,
-                timeout=timeout
-            )
-            
-            current_app.logger.info(f"Coze API response status: {response.status_code}, content: {response.text}")
-            
-            if response.status_code == 200:
-                try:
-                    data = response.json()
-                    # 检查是否有data字段且是字符串类型
-                    if 'data' in data and isinstance(data['data'], str):
-                        try:
-                            # 尝试解析data字段中的JSON字符串
-                            return json.loads(data['data'])
-                        except json.JSONDecodeError as e:
-                            current_app.logger.error(f"JSON decode error in data field: {str(e)}, data: {data['data']}")
-                            return None
-                    return data
-                except json.JSONDecodeError as e:
-                    current_app.logger.error(f"JSON decode error: {str(e)}, response text: {response.text}")
-                    return None
-            else:
-                current_app.logger.error(f"Coze API error: {response.status_code} - {response.text}")
-                return None
+    def _call_workflow(self, workflow_id: str, parameters: Dict[str, Any], timeout: int = 60, max_retries: int = 2) -> Optional[Dict]:
+        """调用工作流，包含重试机制"""
+        retries = 0
+        while retries <= max_retries:
+            try:
+                payload = {
+                    'workflow_id': workflow_id,
+                    'parameters': parameters
+                }
                 
-        except requests.exceptions.Timeout as e:
-            current_app.logger.error(f"Coze API timeout error: {str(e)}")
-            # 对于超时错误，可以考虑增加重试逻辑
-            return None
-        except Exception as e:
-            current_app.logger.error(f"Error calling Coze workflow: {str(e)}")
-            return None
+                current_app.logger.info(f"Calling Coze API (attempt {retries+1}/{max_retries+1}): {self.base_url}, payload: {payload}")
+                response = requests.post(
+                    self.base_url,
+                    headers=self.headers,
+                    json=payload,
+                    timeout=timeout
+                )
+                
+                current_app.logger.info(f"Coze API response status: {response.status_code}, content: {response.text}")
+                
+                if response.status_code == 200:
+                    try:
+                        data = response.json()
+                        # 检查是否有data字段且是字符串类型
+                        if 'data' in data and isinstance(data['data'], str):
+                            try:
+                                # 尝试解析data字段中的JSON字符串
+                                return json.loads(data['data'])
+                            except json.JSONDecodeError as e:
+                                current_app.logger.error(f"JSON decode error in data field: {str(e)}, data: {data['data']}")
+                                return None
+                        return data
+                    except json.JSONDecodeError as e:
+                        current_app.logger.error(f"JSON decode error: {str(e)}, response text: {response.text}")
+                        return None
+                else:
+                    current_app.logger.error(f"Coze API error: {response.status_code} - {response.text}")
+                    return None
+            except requests.exceptions.Timeout as e:
+                current_app.logger.error(f"Coze API timeout error: {str(e)}")
+                retries += 1
+                if retries > max_retries:
+                    current_app.logger.error(f"Coze API timed out after {max_retries+1} attempts")
+                    return None
+                # 指数退避策略
+                import time
+                backoff_time = 2 ** retries
+                current_app.logger.info(f"Retrying after {backoff_time} seconds...")
+                time.sleep(backoff_time)
+            except Exception as e:
+                current_app.logger.error(f"Error calling Coze workflow: {str(e)}")
+                return None
     
     def identify_event_name(self, input_text: str) -> Optional[str]:
         """事件名称识别和优化"""
@@ -163,9 +172,11 @@ class CozeService:
             news_data['news_list']
         )
         
-        # 合并新闻列表到分析结果中
-        analysis_result['news_list'] = news_data['news_list']
-        return analysis_result
+        # 检查分析结果是否有效
+        if analysis_result:
+            # 合并新闻列表到分析结果中
+            analysis_result['news_list'] = news_data['news_list']
+            return analysis_result
         
         # 如果分析失败，仍然返回新闻数据
         current_app.logger.warning(f"Event analysis failed for: {event_name}, returning news data only")

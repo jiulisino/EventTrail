@@ -1,6 +1,8 @@
 from datetime import datetime
 from flask_sqlalchemy import SQLAlchemy
 from werkzeug.security import generate_password_hash, check_password_hash
+from datetime import datetime
+import json
 
 db = SQLAlchemy()
 
@@ -75,3 +77,28 @@ class Favorite(db.Model):
     
     def __repr__(self):
         return f'<Favorite {self.event_name}>' 
+
+class EventAnalysis(db.Model):
+    """事件分析模型"""
+    __tablename__ = 'event_analyses'
+    
+    id = db.Column(db.String(36), primary_key=True)  # 使用UUID作为主键
+    event_name = db.Column(db.String(200), nullable=False)
+    result = db.Column(db.JSON)  # 存储分析结果
+    status = db.Column(db.String(20), default='pending')  # pending, completed, failed
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    completed_at = db.Column(db.DateTime)
+    
+    def to_dict(self):
+        """转换为字典格式"""
+        return {
+            'id': self.id,
+            'event_name': self.event_name,
+            'result': self.result,
+            'status': self.status,
+            'created_at': self.created_at.isoformat() if self.created_at else None,
+            'completed_at': self.completed_at.isoformat() if self.completed_at else None
+        }
+    
+    def __repr__(self):
+        return f'<EventAnalysis {self.event_name}>'

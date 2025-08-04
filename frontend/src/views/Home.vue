@@ -164,10 +164,13 @@ const handleSearch = async () => {
     })
 
     const data = response.data.data
-    eventData.value = data
     newsList.value = data.news_list || []
+    ElMessage.success('新闻列表获取成功，事件分析正在进行中')
 
-    ElMessage.success('搜索成功')
+    // 如果有event_id，开始轮询获取分析结果
+    if (data.event_id) {
+      startPolling(data.event_id)
+    }
   } catch (error) {
     if (error.response?.data?.error) {
       ElMessage.error(error.response.data.error)
@@ -175,6 +178,31 @@ const handleSearch = async () => {
   } finally {
     loading.value = false
   }
+}
+
+// 轮询获取事件分析结果
+const startPolling = (eventId) => {
+  const interval = setInterval(async () => {
+    try {
+      const response = await api.get(`/events/analysis/${eventId}`)
+      const result = response.data.data
+
+      if (result.status === 'completed') {
+        // 分析完成，更新数据
+        eventData.value = result.data
+        ElMessage.success('事件分析完成')
+        clearInterval(interval)
+      } else if (result.status === 'failed') {
+        // 分析失败
+        ElMessage.error('事件分析失败: ' + result.error)
+        clearInterval(interval)
+      }
+      // 如果还是pending状态，继续轮询
+    } catch (error) {
+      console.error('轮询事件分析结果失败:', error)
+      clearInterval(interval)
+    }
+  }, 3000) // 每3秒查询一次
 }
 
 const addToFavorites = async () => {
