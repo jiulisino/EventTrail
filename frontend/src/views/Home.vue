@@ -8,7 +8,7 @@
         <div class="search-box">
           <el-input
             v-model="searchInput"
-            placeholder="请输入事件名称，如：雍正登基初期困境事件"
+            placeholder="请输入事件名称，如：九子夺嫡事件"
             size="large"
             clearable
             @keyup.enter="handleSearch"
@@ -27,14 +27,6 @@
           </el-input>
         </div>
       </div>
-    </div>
-
-    <!-- 新闻列表 -->
-    <div v-if="newsList.length > 0" class="news-section">
-      <h3>相关新闻</h3>
-      <el-card v-for="(news, index) in newsList" :key="index" class="news-card">
-        <p class="news-text">{{ news }}</p>
-      </el-card>
     </div>
 
     <!-- 事件分析结果 -->
@@ -130,6 +122,15 @@
         </div>
       </el-card>
     </div>
+
+    <!-- 新闻列表 -->
+    <div v-if="newsList.length > 0" class="news-section">
+      <h3>新闻来源</h3>
+      <el-card v-for="(news, index) in newsList" :key="index" class="news-card">
+        <p class="news-text">{{ news }}</p>
+      </el-card>
+    </div>
+
   </div>
 </template>
 
@@ -358,4 +359,4 @@ const addToFavorites = async () => {
     margin-bottom: 20px;
   }
 }
-</style> 
+</style>

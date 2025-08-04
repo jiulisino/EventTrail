@@ -70,14 +70,14 @@ class CozeService:
             if 'event_name' in result:
                 event_name = result['event_name']
                 # 检查是否为固定提示语
-                if event_name == "您输入的内容与事件无关，请输入事件名称。":
+                if event_name == "您输入的内容与事件无关，请输入事件名称。" or event_name == "无法回应该搜索。":
                     return None
                 return event_name
             # 检查result是否包含data字段且data是字典
             elif 'data' in result and isinstance(result['data'], dict) and 'event_name' in result['data']:
                 event_name = result['data']['event_name']
                 # 检查是否为固定提示语
-                if event_name == "您输入的内容与事件无关，请输入事件名称。":
+                if event_name == "您输入的内容与事件无关，请输入事件名称。" or event_name == "无法回应该搜索。":
                     return None
                 return event_name
         
@@ -132,7 +132,20 @@ class CozeService:
         event_name = self.identify_event_name(input_text)
         if not event_name:
             current_app.logger.warning(f"Could not identify event name for input: {input_text}")
-            return None
+            # 重新调用工作流以获取具体错误信息
+            workflow_id = self.workflow_ids['event_name_identification']
+            raw_result = self._call_workflow(workflow_id, {'input': input_text})
+            
+            # 检查具体错误类型
+            error_message = "您输入的内容与事件无关，请输入事件名称。"
+            if raw_result:
+                # 直接检查返回的原始结果中是否包含特定错误字符串
+                result_str = str(raw_result)
+                if "无法回应该搜索。" in result_str:
+                    error_message = "无法回应该搜索。"
+                     
+            # 返回包含错误信息的字典
+            return {'error': error_message}
         
         current_app.logger.info(f"Identified event name: {event_name}")
         

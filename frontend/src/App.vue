@@ -5,7 +5,7 @@
         <div class="header-content">
           <div class="logo">
             <el-icon class="logo-icon"><Search /></el-icon>
-            <h1>来龙去脉事件追踪器</h1>
+            <h1>来龙去脉 - 事件追踪器</h1>
           </div>
           <div class="nav-menu">
             <el-menu

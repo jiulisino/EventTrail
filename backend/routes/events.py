@@ -18,8 +18,12 @@ def search_event():
         # 执行完整的搜索和分析流程
         result = coze_service.search_and_analyze_event(input_text)
         
+        # 检查是否有错误信息
+        if result and 'error' in result:
+            return jsonify({'error': result['error']}), 400
+
         if not result:
-            return jsonify({'error': '您输入的内容与事件无关，请输入事件名称。'}), 400
+            return jsonify({'error': '处理失败，请重试。'}), 400
         
         return jsonify({
             'message': '搜索成功',
@@ -79,4 +83,4 @@ def get_news():
         }), 200
         
     except Exception as e:
-        return jsonify({'error': '服务器错误'}), 500 
+        return jsonify({'error': '服务器错误'}), 500
