@@ -236,15 +236,21 @@ const refreshFavorite = async () => {
   refreshLoading.value = true
   try {
     const response = await api.post(`/favorites/${selectedFavorite.value.id}/refresh`)
-    selectedFavorite.value = response.data.data
     
-    // 更新列表中的对应项
-    const index = favorites.value.findIndex(f => f.id === selectedFavorite.value.id)
-    if (index !== -1) {
-      favorites.value[index] = selectedFavorite.value
+    // 检查是否有新进展
+    if (response.data.message === '没有新的进展') {
+      ElMessage.info('没有新的进展')
+    } else {
+      selectedFavorite.value = response.data.data
+      
+      // 更新列表中的对应项
+      const index = favorites.value.findIndex(f => f.id === selectedFavorite.value.id)
+      if (index !== -1) {
+        favorites.value[index] = selectedFavorite.value
+      }
+      
+      ElMessage.success('刷新成功，已更新事件进展')
     }
-    
-    ElMessage.success('刷新成功')
   } catch (error) {
     ElMessage.error('刷新失败')
   } finally {
@@ -492,4 +498,4 @@ onMounted(() => {
     height: auto;
   }
 }
-</style> 
+</style>

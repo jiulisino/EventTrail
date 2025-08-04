@@ -126,30 +126,29 @@ def refresh_favorite(favorite_id):
         
         coze_service = CozeService()
         
-        # 重新搜索和分析事件
-        result = coze_service.search_and_analyze_event(favorite.event_name)
+        # 调用Event_Update工作流检查更新
+        result = coze_service.update_event(favorite.event_name, favorite.timeline)
         
         if not result:
             return jsonify({'error': '获取最新进展失败'}), 500
         
-        # 更新收藏信息
-        favorite.key_men = result['key_men']
-        favorite.event_overview = result['event_overview']
-        favorite.key_point = result['key_point']
-        favorite.latest = result['latest']
-        favorite.event_cause = result['event_cause']
-        favorite.event_process = result['event_process']
-        favorite.event_result = result['event_result']
-        favorite.timeline = result['timeline']
+        if not result['haveProgress']:
+            return jsonify({
+                'message': '没有新的进展',
+                'data': favorite.to_dict()
+            }), 200
+        
+        # 有新进展，更新收藏信息
+        favorite.timeline = result['new_timeline']
         favorite.last_refresh = datetime.utcnow()
         
         db.session.commit()
         
         return jsonify({
-            'message': '刷新成功',
+            'message': '刷新成功，已更新事件进展',
             'data': favorite.to_dict()
         }), 200
         
     except Exception as e:
         db.session.rollback()
-        return jsonify({'error': '服务器错误'}), 500 
+        return jsonify({'error': '服务器错误'}), 500

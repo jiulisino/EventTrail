@@ -15,7 +15,8 @@ class Config:
     WORKFLOW_IDS = {
         'event_name_identification': '7534025846535258151',
         'event_collection': '7529567713032601643',
-        'event_analysis': '7527334340147150857'
+        'event_analysis': '7527334340147150857',
+        'event_update': '7534551436102254644'
     }
     
     # 短信验证码配置（模拟）

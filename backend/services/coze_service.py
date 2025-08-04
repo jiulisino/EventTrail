@@ -135,6 +135,20 @@ class CozeService:
             'key_point': '事件分析超时'
         }
     
+    def update_event(self, event_name: str, last_timeline: List[Dict]) -> Optional[Dict]:
+        """更新事件进展"""
+        workflow_id = self.workflow_ids['event_update']
+        result = self._call_workflow(workflow_id, {
+            'event_name': event_name,
+            'last_timeline': last_timeline
+        })
+        
+        if result and 'haveProgress' in result:
+            return result
+        
+        current_app.logger.warning(f"Failed to update event: {event_name}")
+        return None
+
     def search_and_analyze_event(self, input_text: str) -> Optional[Dict]:
         """完整的搜索和分析流程"""
         # 1. 识别和优化事件名称
